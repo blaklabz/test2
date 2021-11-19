@@ -4,7 +4,7 @@ aws_private_key =  ""
 
 of_version = 1
 cluster_name = "test1"
-config_path = "//local//config3"
+config_path = "config3"
 
 # default tag variables
 tag_environment = ""
