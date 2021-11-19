@@ -4,7 +4,7 @@ aws_private_key =  ""
 
 of_version = 1
 cluster_name = "test1"
-config_path = "C:/Users/tobyw/.kube/config3"
+config_path = "/local/config3"
 
 # default tag variables
 tag_environment = ""
@@ -56,9 +56,9 @@ chart_kiam              = ""
 chart_apache            = ""
 chart_velero            = ""
 chart_phpldapadmin      = ""
-chart_opendistro        = "C:/code/helm/k3s/opendistro-es"
-chart_logstash          = "C:/code/helm/k3s/logstash"
-chart_filebeat          = "C:/code/helm/k3s/filebeat"
+chart_opendistro        = "/helm/opendistro-es"
+chart_logstash          = "/helm/logstash"
+chart_filebeat          = "/helm/filebeat"
 
 
 #cloudwatch#

@@ -1,0 +1,296 @@
+replicaCount: 1
+
+podDisruptionBudget:
+  maxUnavailable: 1
+
+updateStrategy:
+  type: RollingUpdate
+
+terminationGracePeriodSeconds: 30
+
+image:
+  repository: docker.elastic.co/logstash/logstash-oss
+  tag: 7.10.2
+  pullPolicy: IfNotPresent
+  ## Add secrets manually via kubectl on kubernetes cluster and reference here
+  #  pullSecrets:
+  #    - name: "myKubernetesSecret"
+
+service:
+  type: ClusterIP
+  # clusterIP: None
+  # nodePort:
+  # Set this to local, to preserve client source ip.  Default stripes out the source ip
+  # externalTrafficPolicy: Local
+  annotations: {}
+    ## AWS example for use with LoadBalancer service type.
+    # external-dns.alpha.kubernetes.io/hostname: logstash.cluster.local
+    # service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    # service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+  ports:
+    # syslog-udp:
+    #   port: 1514
+    #   targetPort: syslog-udp
+    #   protocol: UDP
+    # syslog-tcp:
+    #   port: 1514
+    #   targetPort: syslog-tcp
+    #   protocol: TCP
+    beats:
+      port: 5044
+      targetPort: beats
+      protocol: TCP
+    # http:
+    #  port: 8080
+    #  targetPort: http
+    #  protocol: TCP
+    # loadBalancerIP: 10.0.0.1
+ports:
+  # - name: syslog-udp
+  #   containerPort: 1514
+  #   protocol: UDP
+  # - name: syslog-tcp
+  #   containerPort: 1514
+  #   protocol: TCP
+  - name: beats
+    containerPort: 5044
+    protocol: TCP
+  # - name: http
+  #   containerPort: 8080
+  #   protocol: TCP
+
+ingress:
+  enabled: true
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  path: /
+  hosts:
+    - logstash.blaklabz.io
+  tls: 
+    - secretName: blaklabz-io-tls
+      hosts:
+        - logstash.blaklabz.io
+
+resources: 
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  limits:
+    #cpu: 100m
+    memory: 1024Mi
+  requests:
+    cpu: 100m
+    memory: 1024Mi
+
+priorityClassName: ""
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+  # podAntiAffinity:
+  #   requiredDuringSchedulingIgnoredDuringExecution:
+  #     - topologyKey: "kubernetes.io/hostname"
+  #       labelSelector:
+  #         matchLabels:
+  #           release: logstash
+
+podAnnotations: {}
+  # iam.amazonaws.com/role: "logstash-role"
+  # prometheus.io/scrape: "true"
+  # prometheus.io/path: "/metrics"
+  # prometheus.io/port: "9198"
+
+podLabels: {}
+  # team: "developers"
+  # service: "logstash"
+
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: monitor
+  initialDelaySeconds: 300
+      #periodSeconds: 30
+      #timeoutSeconds: 30
+      #failureThreshold: 6
+      #successThreshold: 1
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: monitor
+  initialDelaySeconds: 300
+      #periodSeconds: 30
+      #timeoutSeconds: 30
+      #failureThreshold: 6
+      #successThreshold: 1
+
+persistence:
+  enabled: true
+  ## logstash data Persistent Volume Storage Class
+  ## If defined, storageClassName: <storageClass>
+  ## If set to "-", storageClassName: "", which disables dynamic provisioning
+  ## If undefined (the default) or set to null, no storageClassName spec is
+  ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+  ##   GKE, AWS & OpenStack)
+  ##
+  # storageClass: "-"
+  accessMode: ReadWriteOnce
+  size: 2Gi
+
+
+volumeMounts:
+  - name: data
+    mountPath: /usr/share/logstash/data
+  - name: patterns
+    mountPath: /usr/share/logstash/patterns
+  - name: pipeline
+    mountPath: /usr/share/logstash/pipeline
+  - name: fbeat-secrets
+    mountPath: /etc/certs
+
+volumes: 
+  # - name: tls
+  #   secret:
+  #     secretName: logstash-tls
+  # - name: pipeline
+  #   configMap:
+  #     name: logstash-pipeline
+  #- name: certs
+  #   hostPath:
+  #     path: /tmp
+  - name: fbeat-secrets
+    secret: 
+      secretName: fbeat-secrets
+              
+exporter:
+  logstash:
+    enabled: false
+    image:
+      repository: bonniernews/logstash_exporter
+      tag: v0.1.2
+      pullPolicy: IfNotPresent
+    env: {}
+    resources: {}
+    path: /metrics
+    port: 9198
+    target:
+      port: 9600
+      path: /metrics
+    livenessProbe:
+      httpGet:
+        path: /metrics
+        port: ls-exporter
+      periodSeconds: 15
+      timeoutSeconds: 60
+      failureThreshold: 8
+      successThreshold: 1
+    readinessProbe:
+      httpGet:
+        path: /metrics
+        port: ls-exporter
+      periodSeconds: 15
+      timeoutSeconds: 60
+      failureThreshold: 8
+      successThreshold: 1
+
+elasticsearch:
+  host: opendistro-es-client-service 
+  port: 9200
+  username: "admin"
+  password: "admin"
+  ssl.certificate_authorities: ["/etc/certs/root-ca.pem"]
+  ssl.certificate: "/etc/certs/kirk.pem"
+  ssl.key: "/etc/certs/kirk-key.pem"
+  ssl.verification_mode: none 
+
+
+## ref: https://github.com/elastic/logstash-docker/blob/master/build/logstash/env2yaml/env2yaml.go
+config:
+  config.reload.automatic: "false"
+  path.config: /usr/share/logstash/pipeline
+  path.data: /usr/share/logstash/data
+
+  ## ref: https://www.elastic.co/guide/en/logstash/current/persistent-queues.html
+  queue.checkpoint.writes: 1
+  queue.drain: "true"
+  queue.max_bytes: 1gb  # disk capacity must be greater than the value of `queue.max_bytes`
+  queue.type: persisted
+
+## Patterns for filters.
+## Each YAML heredoc will become a separate pattern file.
+patterns:
+  # main: |-
+  #   TESTING {"foo":.*}$
+
+## NOTE: To achieve multiple pipelines with this chart, current best practice
+## is to maintain one pipeline per chart release. In this way configuration is
+## simplified and pipelines are more isolated from one another.
+
+inputs:
+  main: |-
+    input {
+      # udp {
+      #   port => 1514
+      #   type => syslog
+      # }
+      # tcp {
+      #   port => 1514
+      #   type => syslog
+      # }
+      beats {
+        port => 5044
+        ssl  => true
+        #ssl_certificate_authorities => ["/etc/certs/root-ca.pem"]
+        ssl_certificate => "/etc/certs/kirk.pem"
+        ssl_key => "/etc/certs/kirk-key.pem"
+        ssl_verify_mode => "none"
+
+      }
+      # http {
+      #   port => 8080
+      # }
+      # kafka {
+      #   ## ref: https://www.elastic.co/guide/en/logstash/current/plugins-inputs-kafka.html
+      #   bootstrap_servers => "kafka-input:9092"
+      #   codec => json { charset => "UTF-8" }
+      #   consumer_threads => 1
+      #   topics => ["source"]
+      #   type => "example"
+      # }
+    }
+
+filters:
+  # main: |-
+  #   filter {
+  #   }
+
+outputs:
+  main: |-
+    output {
+      s3 {
+        access_key_id => "AKIA6FPBJ5TDKNGVP27Z"
+        secret_access_key => "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"
+        bucket => "blaklabz"
+        time_file => 5
+        codec => "plain"
+        tags => ["bucket1"]
+      
+        }
+      
+      
+      elasticsearch {
+        hosts => ["https://opendistro-es-client-service:9200"]
+        index => "logstash-%{+YYYY.MM.dd}"
+        ssl => true
+        ssl_certificate_verification => false
+        user => admin
+        password => admin
+        cacert => '/etc/certs/root-ca.pem'
+       }
+    }
+    
