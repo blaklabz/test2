@@ -87,16 +87,16 @@ kibana:
     path: /
     hosts:
       - kibana.blaklabz.io
-    #tls:
-    #  - secretName: blaklabz-io-tls
-    #    hosts:
-    #      - kibana.blaklabz.io
+    tls:
+      - secretName: blaklabz-io-tls
+        hosts:
+          - kibana.blaklabz.io
 
   service:
     type: ClusterIP
     annotations: {}
 
-  config: {}
+  config:
     ## Default Kibana configuration from kibana-docker.
     # server.name: kibana
     # server.host: "0"
@@ -512,7 +512,7 @@ elasticsearch:
   loggingConfig:
     ## Default config
     ## you can override this using by setting a system property, for example -Des.logger.level=DEBUG
-    es.logger.level: INFO
+    es.logger.level: DEBUG
     rootLogger: ${es.logger.level}, console
     logger:
       ## log action execution errors for easier debugging
