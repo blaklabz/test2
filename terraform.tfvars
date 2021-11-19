@@ -56,9 +56,9 @@ chart_kiam              = ""
 chart_apache            = ""
 chart_velero            = ""
 chart_phpldapadmin      = ""
-chart_opendistro        = "/helm/opendistro-es"
-chart_logstash          = "/helm/logstash"
-chart_filebeat          = "/helm/filebeat"
+chart_opendistro        = "opendistro-es-chart"
+chart_logstash          = "logstash-chart"
+chart_filebeat          = "filebeat-chart"
 
 
 #cloudwatch#
