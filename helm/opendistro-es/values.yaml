@@ -87,10 +87,10 @@ kibana:
     path: /
     hosts:
       - kibana.blaklabz.io
-    tls:
-      - secretName: blaklabz-io-tls
-        hosts:
-          - kibana.blaklabz.io
+    #tls:
+    #  - secretName: blaklabz-io-tls
+    #    hosts:
+    #      - kibana.blaklabz.io
 
   service:
     type: ClusterIP
