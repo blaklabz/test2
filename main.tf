@@ -19,19 +19,19 @@ provider "helm" {
 
 ## Services
 module "filebeat" {
-    depends_on          = [module.oss-elk-secrets]
+    #depends_on          = [module.oss-elk-secrets]
     source              = "./filebeat"
     chart_filebeat      = "${var.chart_filebeat}"
 }
 
 module "opendistro" {
-    depends_on          = [module.oss-elk-secrets]
+    #depends_on          = [module.oss-elk-secrets]
     source              = "./opendistro"
     chart_opendistro      = "${var.chart_opendistro}"
 }
 
 module "logstash" {
-    depends_on          = [module.oss-elk-secrets]
+    #depends_on          = [module.oss-elk-secrets]
     source              = "./logstash"
     chart_logstash      = "${var.chart_logstash}"
 }
